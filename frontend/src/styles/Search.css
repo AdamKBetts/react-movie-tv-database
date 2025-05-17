@@ -119,3 +119,8 @@
     color: #777;
     margin-top: auto;
 }
+
+.result-item-link {
+    text-decoration: none;
+    color: inherit;
+}

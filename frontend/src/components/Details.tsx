@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import axios from 'axios';
+import '../styles.Details.css';
 
 interface Genre {
     id: number;
@@ -14,11 +15,16 @@ interface ProductionCompany {
     origin_country: string;
 }
 
+interface Language {
+    english_name: string;
+    iso_639_1: string;
+    name: string;
+}
+
 interface MediaDetails {
     id: number;
     title?: string;
     name?: string;
-    media_type?: 'movie' | 'tv';
     overview?: string;
     poster_path?: string;
     backdrop_path?: string;
@@ -28,12 +34,19 @@ interface MediaDetails {
     episode_run_time?: number[];
     genres?: Genre[];
     vote_average?: number;
+    vote_count?: number;
     tagline?: string;
     status?: string;
     production_companies?: ProductionCompany[];
+    spoken_languages?: Language[];
+    budget?: number;
+    revenue?: number;
+    homepage?: string;
+    number_of_seasons?: number;
+    number_of_episodes?: number;
 }
 
-const API_BASE_URL = 'http://localhost:5000/ap';
+const API_BASE_URL = 'http://localhost:5000/api';
 
 const Details: React.FC = () => {
     const { mediaType, id } = useParams<{ mediaType: 'movie' | 'tv', id: string }>();
@@ -77,24 +90,20 @@ const Details: React.FC = () => {
     }, [mediaType, id]);
 
     if (loading) {
-        return <div>Loading detials...</div>;
+        return <div style={{textAlign: 'center', padding: '20px'}}>Loading detials...</div>;
     }
 
     if (error) {
-        return <div className="error-message">Error: {error}</div>;
+        return <div className="error-message" style={{textAlign: 'center', padding: '20px', color: 'red'}}>Error: {error}</div>;
     }
 
     if (!details) {
-        return <div>No details available.</div>;
-    }
-
-    if (!details) {
-        return <div>No details available.</div>;
+        return <div style={{textAlign: 'center', padding: '20px'}}>Select a movie or TV show to see details.</div>;
     }
 
     const title = details.title || details.name;
     const releaseOrAirDate = details.release_date || details.first_air_date;
-    const runtime = details.runtime || (details.episode_run_time ? details.episode_run_time[0] : undefined);
+    const runtimeDisplay = details.runtime ? `${details.runtime} minutes` : (details.episode_run_time && details.episode_run_time.length > 0 ? `${details.episode_run_time[0]} minutes/episode` : 'N/A');
 
     return (
         <div className="details-container">
@@ -117,15 +126,54 @@ const Details: React.FC = () => {
                     <h2>{title}</h2>
                     {details.tagline && <p className="tagline">{details.tagline}</p>}
                     <p><strong>Type:</strong> {mediaType === 'movie' ? 'Movie' : 'TV Show'}</p>
-                    {releaseOrAirDate && <p><strong>Release/First air Date:</strong> {releaseOrAirDate}</p>}
-                    {runtime && <p><strong>Runtime:</strong> {runtime} minutes</p>}
-                    {details.vote_average !== undefined && details.vote_average !== null && (
-                        <p><strong>Rating:</strong> {details.vote_average.toFixed(1)} / 10</p>
+
+                    {releaseOrAirDate && (
+                        <p><strong>Release/First air Date:</strong> {releaseOrAirDate}</p>
                     )}
+
+                    {runtimeDisplay !== 'N/A' && (
+                        <p><strong>Runtime:</strong> {runtimeDisplay}</p>
+                    )}
+
+                    {details.vote_average !== undefined && details.vote_average !== null && (
+                        <p><strong>Rating:</strong> {details.vote_average.toFixed(1)} / 10 ({details.vote_count} votes)</p>
+                    )}
+
                     {details.genres && details.genres.length > 0 && (
                         <p><strong>Genres:</strong> {details.genres.map(g => g.name).join(', ')}</p>
                     )}
+
+                    {details.spoken_languages && details.spoken_languages.length > 0 && (
+                        <p><strong>Languages:</strong> {details.spoken_languages.map(lang => lang.english_name).join(', ')}</p>
+                    )}
+
+                    {details.production_companies && details.production_companies.length > 0 && (
+                        <p><strong>Production:</strong> {details.production_companies.map(company => company.name).join(', ')}</p>
+                    )}
+
+                    {details.status && <p><strong>Status:</strong> {details.status}</p>}
+
+                    {mediaType === 'tv' && details.number_of_seasons && (
+                        <p><strong>Seasons:</strong> {details.number_of_seasons}</p>
+                    )}
+
+                    {mediaType === 'tv' && details.number_of_episodes && (
+                        <p><strong>Total Episodes:</strong> {details.number_of_episodes}</p>
+                    )}
+
                     <p className="overview"><strong>Overview:</strong> {details.overview || 'No overview available.'}</p>
+
+                    {details.homepage && (
+                        <p><strong>Homepage:</strong> <a href={details.homepage} target="_blank" rel="noopener noreferrer">{details.homepage}</a></p>
+                    )}
+
+                    {mediaType === 'movie' && details.budget != null && details.budget > 0 && (
+                        <p><strong>Budget:</strong> ${details.budget.toLocaleString()}</p>
+                    )}
+
+                    {mediaType === 'movie' && details.revenue != null && details.revenue > 0 && (
+                        <p><strong>Revenue:</strong> ${details.revenue.toLocaleString()}</p>
+                    )}
                 </div>
             </div>
         </div>
